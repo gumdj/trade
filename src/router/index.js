@@ -2,12 +2,6 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Home from '../views/Home.vue'
 import Index from '../views/Index.vue'
-import Brand from "../views/sys/Brand"
-import GoodsInformation from "../views/sys/GoodsInformation"
-import GoodsSpecification from "../views/sys/GoodsSpecification"
-import GoodsType from "../views/sys/GoodsType"
-import Supplier from "../views/sys/Supplier"
-import Supply from "../views/sys/Supply"
 
 import axios from "../axios"
 import store from '../store'
@@ -66,90 +60,18 @@ const router = new VueRouter({
   routes
 })
 
+router.$addRoutes = (params) => {
+  router.matcher = new VueRouter({mode: 'history'}).matcher;
+  params.forEach((i) => {
+    router.addRoute(i)
+  })
+  // router.addRoutes(params)
+}
+
 //TODO
 router.beforeEach((to, from, next) => {
-  let nav = [
-    {
-      title: '信息管理',
-      name: 'InfoManage',
-      icon: 'el-icon-s-operation',
-      component: '',
-      path: '',
-      children: [
-        {
-          title: '商品信息',
-          name: 'Goods',
-          icon: 'el-icon-shopping-cart-1',
-          component: 'sys/GoodsInformation',
-          path: '/sys/goodsInformation',
-          children: []
-        },
-        {
-          title: '供应商信息',
-          name: 'Supplier',
-          icon: 'el-icon-s-custom',
-          component: 'sys/Supplier',
-          path: '/sys/supplier',
-          children: []
-        },
-        {
-          title: '商品品牌',
-          name: 'Brand',
-          icon: 'el-icon-postcard',
-          component: 'sys/Brand',
-          path: '/sys/brand',
-          children: []
-        },
-        {
-          title: '商品分类',
-          name: 'GoodsType',
-          icon: 'el-icon-menu',
-          component: 'sys/GoodsType',
-          path: '/sys/goodsType',
-          children: []
-        },
-        {
-          title: '商品规格',
-          name: 'GoodsSpecification',
-          icon: 'el-icon-notebook-2',
-          component: 'sys/GoodsSpecification',
-          path: '/sys/goodsSpecification',
-          children: []
-        },
-        {
-          title: '供应记录',
-          name: 'Supply',
-          icon: 'el-icon-coin',
-          component: 'sys/Supply',
-          path: '/sys/supply',
-          children: []
-        }
-      ]
-    }
-  ]
   let hasRoute = store.state.menus.hasRoutes
-  if (!hasRoute) {
-    /*//拿到menuList
-    store.commit('setMenuList', nav)
-    //拿到用户权限
-    store.commit('setPermList', [])
-    //动态绑定路由
-    let newRoutes = router.options.routes
-    nav.forEach(menu => {
-      if (menu.children) {
-        menu.children.forEach(e => {
-          //转化路由
-          let route = menuToRoute(e)
-          //把路由添加到路由管理中
-          if(route) {
-            newRoutes[0].children.push(route)
-          }
-        })
-      }
-    })
-    router.addRoutes(newRoutes)
-    hasRoute = true
-    store.commit('changeRouteStatus', hasRoute)*/
+  if (hasRoute === false) {
     axios.get('/sys/menu/nav', {
       headers: {
         Authorization: localStorage.getItem('token')
@@ -166,6 +88,7 @@ router.beforeEach((to, from, next) => {
           menu.children.forEach(e => {
             //转化路由
             let route = menuToRoute(e)
+            console.log(route)
             //把路由添加到路由管理中
             if(route) {
               newRoutes[0].children.push(route)
@@ -173,10 +96,10 @@ router.beforeEach((to, from, next) => {
           })
         }
       })
-      router.addRoutes(newRoutes)
-      hasRoute = true
-      store.commit('changeRouteStatus', hasRoute)
+      router.$addRoutes(newRoutes)
     })
+    hasRoute = true
+    store.commit('changeRouteStatus', hasRoute)
   }
   next()
 })

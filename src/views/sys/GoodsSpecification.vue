@@ -13,7 +13,7 @@
         <el-button style="margin-top: 5px" @click="">搜索</el-button>
       </el-form-item>
       <el-form-item style="height: 45px">
-        <el-button style="margin: 5px" type="primary" @click="dialogVisible = true">新增</el-button>
+        <el-button style="margin: 5px" type="primary" @click="dialogVisible = true; updateOrSave = '添加'">新增</el-button>
       </el-form-item>
       <el-form-item style="height: 45px">
         <el-popconfirm
@@ -59,7 +59,7 @@
               @click="handleEdit(scope.row.speciId);">编辑</el-button>
           <el-popconfirm
               title="确定删除吗？"
-              @confirm="handleDelete(scope.row.speciId)">
+              @confirm="handleDelete(scope.row.speciId, scope.row)">
             <el-button
                 size="mini"
                 type="danger"
@@ -88,7 +88,7 @@
           <el-input v-model="editForm.speciName"></el-input>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="submitForm('editForm')">添加</el-button>
+          <el-button v-model="updateOrSave" type="primary" @click="submitForm('editForm')">{{updateOrSave}}</el-button>
           <el-button @click="resetForm('editForm')">重置</el-button>
         </el-form-item>
       </el-form>
@@ -101,6 +101,8 @@ export default {
   name: "GoodsSpecification",
   data() {
     return {
+      updateOrSave: '',
+
       total: 0,
       size: 10,
       current: 1,
@@ -129,28 +131,29 @@ export default {
   },
   methods: {
     handleEdit(speciId) {
+      this.updateOrSave = '更新'
       this.$axios.get('/sys/specification/info/' + speciId).then(res => {
         this.editForm = res.data.data
         this.dialogVisible = true
       })
     },
-    handleDelete(speciId) {
+    handleDelete(speciId, row) {
       let speciIds = [ ]
       if (speciId) {
         speciIds.push(speciId)
+        this.$refs.multipleTable.clearSelection()
       } else {
         this.multipleSelection.forEach(row => {
           speciIds.push(row.speciId)
         })
+        this.$refs.multipleTable.clearSelection()
       }
-      this.$axios.post('/sys/goodsType/delete/', speciIds).then(res => {
+      this.$axios.post('/sys/specification/delete/', speciIds).then(res => {
+        this.getSpecifications()
         this.$message({
           showClose: true,
           message: 'Succeed',
           type: 'success',
-          onClose: () => {
-            this.getSpecifications()
-          }
         })
       })
     },
@@ -163,13 +166,12 @@ export default {
         if (valid) {
           this.$axios.post('/sys/specification/' + (this.editForm.speciId ? 'update' : 'save'), this.editForm)
               .then(res => {
+                this.dialogVisible = false
+                this.getSpecifications()
                 this.$message({
                   showClose: true,
                   message: 'Succeed',
                   type: 'success',
-                  onClose: () => {
-                    this.getSpecifications()
-                  }
                 })
                 this.resetForm('editForm')
               })

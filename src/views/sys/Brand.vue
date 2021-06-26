@@ -10,7 +10,7 @@
       />
       </el-form-item>
       <el-form-item style="height: 45px">
-        <el-button style="margin-top: 5px" @click="getBrands">搜索</el-button>
+        <el-button style="margin-top: 5px" @click="getBrands()">搜索</el-button>
       </el-form-item>
       <el-form-item style="height: 45px">
         <el-button style="margin: 5px" type="primary" @click="dialogVisible = true;updateOrSave = '添加'">新增</el-button>
@@ -153,7 +153,7 @@ export default {
       let brandIds = []
       if (brandId) {
         brandIds.push(brandId)
-        this.$refs.multipleTable.toggleRowSelection(row)
+        this.$refs.multipleTable.clearSelection()
       } else {
         this.multipleSelection.forEach(row => {
           brandIds.push(row.brdId)

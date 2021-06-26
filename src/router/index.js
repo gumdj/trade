@@ -65,7 +65,6 @@ router.$addRoutes = (params) => {
   params.forEach((i) => {
     router.addRoute(i)
   })
-  // router.addRoutes(params)
 }
 
 //TODO
@@ -88,7 +87,6 @@ router.beforeEach((to, from, next) => {
           menu.children.forEach(e => {
             //转化路由
             let route = menuToRoute(e)
-            console.log(route)
             //把路由添加到路由管理中
             if(route) {
               newRoutes[0].children.push(route)

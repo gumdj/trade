@@ -10,10 +10,10 @@
         />
       </el-form-item>
       <el-form-item style="height: 45px">
-        <el-button style="margin-top: 5px" @click="">搜索</el-button>
+        <el-button style="margin-top: 5px" @click="getSuppliers()">搜索</el-button>
       </el-form-item>
       <el-form-item style="height: 45px">
-        <el-button style="margin: 5px" type="primary" @click="dialogVisible = true">新增</el-button>
+        <el-button style="margin: 5px" type="primary" @click="dialogVisible = true; updateOrSave = '添加'">新增</el-button>
       </el-form-item>
       <el-form-item style="height: 45px">
         <el-popconfirm
@@ -85,7 +85,7 @@
           <el-divider direction="vertical"></el-divider>
           <el-popconfirm
               title="确定删除吗？"
-              @confirm="handleDelete(scope.row.sprId)">
+              @confirm="handleDelete(scope.row.sprId, scope.row)">
             <el-button
                 size="mini"
                 type="text"
@@ -131,7 +131,7 @@
           <el-input type="textarea" show-word-limit maxlength="100" v-model="editForm.sprIntro"></el-input>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="submitForm('editForm')">添加</el-button>
+          <el-button type="primary" v-model="updateOrSave" @click="submitForm('editForm')">{{ updateOrSave }}</el-button>
           <el-button @click="resetForm('editForm')">重置</el-button>
         </el-form-item>
       </el-form>
@@ -144,6 +144,8 @@ export default {
   name: "Supplier",
   data() {
     return {
+      updateOrSave: '',
+
       searchForm: { },
       multipleSelection: [],
       canDelete: true,
@@ -179,28 +181,29 @@ export default {
   },
   methods: {
     handleEdit(sprId) {
-      this.$axios.get('/sys/goodsInfo/info/' + sprId).then(res => {
+      this.updateOrSave = '更新'
+      this.$axios.get('/sys/supplier/info/' + sprId).then(res => {
         this.editForm = res.data.data
         this.dialogVisible = true
       })
     },
-    handleDelete(sprId) {
+    handleDelete(sprId, row) {
       let sprIds = []
       if (sprId) {
         sprIds.push(sprId)
+        this.$refs.multipleTable.clearSelection()
       } else {
         this.multipleSelection.forEach(row => {
           sprIds.push(row.sprId)
         })
+        this.$refs.multipleTable.clearSelection()
       }
       this.$axios.post('/sys/supplier/delete', sprIds).then(res => {
+        this.getSuppliers()
         this.$message({
           showClose: true,
           message: 'Succeed',
           type: 'success',
-          onClose: () => {
-            this.getSuppliers()
-          }
         })
       })
     },
@@ -224,13 +227,12 @@ export default {
         if (valid) {
           this.$axios.post('/sys/supplier/' + (this.editForm.sprId ? 'update' : 'save'), this.editForm)
               .then(res => {
+                this.dialogVisible = false
+                this.getSuppliers()
                 this.$message({
                   showClose: true,
                   message: 'Succeed',
                   type: 'success',
-                  onClose: () => {
-                    this.getSuppliers()
-                  }
                 })
                 this.resetForm('editForm')
               })
@@ -260,7 +262,7 @@ export default {
       this.getSuppliers()
     },
     getSuppliers() {
-      this.$axios.get('/sys/suppliers/list', {
+      this.$axios.get('/sys/supplier/list', {
         params: {
           gdName: this.searchForm.sprName,
           current: this.current,

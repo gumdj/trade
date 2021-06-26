@@ -10,10 +10,10 @@
         />
       </el-form-item>
       <el-form-item style="height: 45px">
-        <el-button style="margin-top: 5px" @click="">搜索</el-button>
+        <el-button style="margin-top: 5px" @click="getGoodsInformation()">搜索</el-button>
       </el-form-item>
       <el-form-item style="height: 45px">
-        <el-button style="margin: 5px" type="primary" @click="dialogVisible = true;getItemList">新增</el-button>
+        <el-button style="margin: 5px" type="primary" @click="dialogVisible = true;updateOrSave = '添加';getItemList()">新增</el-button>
       </el-form-item>
       <el-form-item style="height: 45px">
         <el-popconfirm
@@ -62,11 +62,6 @@
           align="center">
       </el-table-column>
       <el-table-column
-          label="所属规格编号"
-          prop="tyId"
-          align="center">
-      </el-table-column>
-      <el-table-column
           prop="gdMarketPrice"
           label="市场价"
           align="center">
@@ -94,6 +89,11 @@
           label="库存量">
       </el-table-column>
       <el-table-column
+          prop="gdUnit"
+          align="center"
+          label="单位">
+      </el-table-column>
+      <el-table-column
           label="操作"
           align="center"
           show-overflow-tooltip>
@@ -105,7 +105,7 @@
           <el-divider direction="vertical"></el-divider>
           <el-popconfirm
               title="确定删除吗？"
-              @confirm="handleDelete(scope.row.gdId)">
+              @confirm="handleDelete(scope.row.gdId, scope.row)">
             <el-button
                 size="mini"
                 type="text"
@@ -143,39 +143,43 @@
         </el-form-item>
         <el-form-item label="所属品牌" prop="brdId">
           <el-select v-model="editForm.brdId" placeholder="请选择商品所属品牌名称">
-            <el-option :label="item.brdName" :value="item.brdId" v-for="(item, index) in brdItemList" :key="index"></el-option>
+            <el-option :label="item.brd_name" :value="item.brd_id" v-for="(item, index) in brdItemList" :key="index"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="所属类型" prop="tyId">
           <el-select v-model="editForm.tyId" placeholder="请选择商品所属品牌名称">
-            <el-option :label="item.tyName" :value="item.tyId" v-for="(item, index) in tyItemList" :key="index"></el-option>
+            <el-option :label="item.ty_name" :value="item.ty_id" v-for="(item, index) in tyItemList" :key="index"></el-option>
           </el-select>
-        </el-form-item>
-        <el-form-item label="规格" prop="speciId">
-        <el-select v-model="editForm.speciId" placeholder="请选择商品所属品牌名称">
-          <el-option :label="item.speciName" :value="item.speciId" v-for="(item, index) in speciItemList" :key="index"></el-option>
-        </el-select>
         </el-form-item>
         <el-row>
           <el-col :span="12">
-            <el-form-item label="市场价" prop="gdMarketPrice">
-              <el-input type="number" min="0" step="0.5" placeholder="单位：元" v-model="editForm.gdMarketPrice"></el-input>
+            <el-form-item label="市场价" prop="gdMarketprice">
+              <el-input type="number" min="0" step="0.5" placeholder="单位：元" v-model="editForm.gdMarketprice"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="成本价" prop="gdCostPrice">
-              <el-input type="number" min="0" step="0.5" placeholder="单位：元" v-model="editForm.gdCostPrice"></el-input>
+            <el-form-item label="成本价" prop="gdCostprice">
+              <el-input type="number" min="0" step="0.5" placeholder="单位：元" v-model="editForm.gdCostprice"></el-input>
             </el-form-item>
           </el-col>
         </el-row>
         <el-form-item label="介绍">
           <el-input type="textarea" show-word-limit maxlength="100" v-model="editForm.gdIntro"></el-input>
         </el-form-item>
-        <el-form-item label="库存量" prop="gdAmount">
-          <el-input v-model="editForm.gdAmount"></el-input>
-        </el-form-item>
+        <el-row>
+          <el-col :span="12">
+            <el-form-item label="库存量" prop="gdAmount">
+              <el-input v-model="editForm.gdAmount"></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="单位" prop="gdUnit">
+              <el-input v-model="editForm.gdUnit"></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
         <el-form-item>
-          <el-button type="primary" @click="submitForm('editForm')">添加</el-button>
+          <el-button v-model="updateOrSave" type="primary" @click="submitForm('editForm')">{{ updateOrSave }}</el-button>
           <el-button @click="resetForm('editForm')">重置</el-button>
         </el-form-item>
       </el-form>
@@ -188,15 +192,10 @@ export default {
   name: "GoodsInformation",
   data() {
     return {
-      tyItemList: [
-        {tyName:'高', tyId: '1'}
-      ],
-      brdItemList: [
-        {brdName:'英特尔', brdId: '1'}
-      ],
-      speciItemList: [
-        {speciName:'英特尔', speciId: '1'}
-      ],
+      updateOrSave: '',
+
+      tyItemList: [ ],
+      brdItemList: [ ],
       searchForm: { },
       multipleSelection: [],
       canDelete: true,
@@ -205,25 +204,21 @@ export default {
         gdName: '',
         tyId: '',
         tyName: '',
-        speciName: '',
-        speciId: '',
-        gdMarketPrice: '',
-        gdCostPrice: '',
+        gdMarketprice: '',
+        gdCostprice: '',
         gdIntro: '',
-        gdAmount: ''
+        gdAmount: '',
+        gdUnit: ''
       },
       rules: {
         gdName: [
-          { required: true, message: '请输入品牌名称', trigger: 'blur' },
+          { required: true, message: '请输入品牌名称', trigger: 'blur' }
         ],
         brdId: [
-          { required: true, message: '请选择品牌', trigger: 'change' },
+          { required: true, message: '请选择品牌', trigger: 'change' }
         ],
         tyId: [
-          { required: true, message: '请选择类型', trigger: 'change' },
-        ],
-        speciId: [
-          { required: true, message: '请选择规格', trigger: 'change' },
+          { required: true, message: '请选择类型', trigger: 'change' }
         ],
         gdMarketPrice: [
           { required: true, message: '请填写市场价', trigger: 'blur' }
@@ -233,13 +228,16 @@ export default {
         ],
         gdAmount: [
           { required: true, message: '请填写库存量', trigger: 'blur' }
+        ],
+        gdUnit: [
+          { required: true, message: '请填写单位', trigger: 'blur' }
         ]
       },
       introductionText: '',
       dialogVisible: false,
       introductionVisible: false,
       tableData: [ ],
-      size: 1,
+      size: 10,
       current: 1,
       total: 0
     }
@@ -249,35 +247,35 @@ export default {
   },
   methods: {
     handleEdit(gdId) {
-      console.log(gdId)
+      this.updateOrSave = '更新'
       this.$axios.get('/sys/goodsInfo/info/' + gdId).then(res => {
         this.editForm = res.data.data
         this.dialogVisible = true
       })
     },
-    handleDelete(gdId) {
+    handleDelete(gdId, row) {
       let gdIds = []
       if (gdId) {
         gdIds.push(gdId)
+        this.$refs.multipleTable.clearSelection()
       } else {
         this.multipleSelection.forEach(row => {
           gdIds.push(row.gdId)
         })
+        this.$refs.multipleTable.clearSelection()
       }
       this.$axios.post('/sys/goodsInfo/delete', gdIds).then(res => {
+        this.getGoodsInformation()
         this.$message({
           showClose: true,
           message: 'Succeed',
           type: 'success',
-          onClose: () => {
-            this.getGoodsInformation()
-          }
         })
       })
     },
     handleSelectionChange(val) {
       this.multipleSelection = val;
-      this.canDelete = val.length == 0
+      this.canDelete = val.length === 0
     },
     handleClose() {
       this.resetForm('editForm')
@@ -295,13 +293,12 @@ export default {
         if (valid) {
           this.$axios.post('/sys/goodsInfo/' + (this.editForm.gdId ? 'update' : 'save'), this.editForm)
           .then(res => {
+            this.dialogVisible = false
+            this.getGoodsInformation()
             this.$message({
               showClose: true,
               message: 'Succeed',
               type: 'success',
-              onClose: () => {
-                this.getGoodsInformation()
-              }
             })
           this.resetForm('editForm')
           })
@@ -350,10 +347,11 @@ export default {
       })
     },
     getItemList() {
-      this.$axios.get('/sys/goodsInfo/selectInfo').then(res => {
-        this.brdItemList = res.data.data.brdItemList
-        this.tyItemList = res.data.data.tyItemList
-        this.speciItemList = res.data.data.speciItemList
+      this.$axios.get('/sys/brand/id').then(res => {
+        this.brdItemList = res.data.data
+      })
+      this.$axios.get('/sys/goodsType/id').then(res => {
+        this.tyItemList = res.data.data
       })
     }
   },
